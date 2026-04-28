@@ -57,7 +57,8 @@ class BotConfig:
         # Support key as base64 env var (for Railway/cloud) or local file path
         key_b64 = os.getenv("KALSHI_PRIVATE_KEY_B64", "")
         if key_b64:
-            pem_bytes = base64.b64decode(key_b64)
+            # Strip all whitespace — Railway's UI can silently inject spaces/newlines
+            pem_bytes = base64.b64decode("".join(key_b64.split()))
             tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pem")
             tmp.write(pem_bytes)
             tmp.flush()
