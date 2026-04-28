@@ -1,0 +1,5 @@
+aiohttp>=3.9.0
+py-clob-client>=0.14.0
+kalshi-python>=2.1.0
+cryptography>=42.0.0
+python-dotenv>=1.0.0

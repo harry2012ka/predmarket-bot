@@ -1,0 +1,8 @@
+.env
+keys/
+data/
+logs/
+__pycache__/
+*.pyc
+*.pem
+*.db
