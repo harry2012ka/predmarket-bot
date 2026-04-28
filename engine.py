@@ -72,6 +72,7 @@ class TradingEngine:
             self.kalshi = KalshiClient(
                 api_key_id=self.cfg.kalshi_api_key_id,
                 private_key_path=self.cfg.kalshi_private_key_path,
+                private_key_bytes=self.cfg.kalshi_private_key_bytes,
                 demo=self.cfg.kalshi_demo_mode,
             )
             bal = await self.kalshi.get_balance()

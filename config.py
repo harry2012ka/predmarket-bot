@@ -5,9 +5,8 @@ Copy .env.example to .env and fill in your credentials.
 
 import base64
 import os
-import tempfile
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Literal, Optional
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -36,6 +35,7 @@ class BotConfig:
     # ── Kalshi credentials ────────────────────────────────────────────────────
     kalshi_api_key_id: str = ""
     kalshi_private_key_path: str = "keys/kalshi_private.pem"
+    kalshi_private_key_bytes: Optional[bytes] = None  # set when using B64 env var
     kalshi_demo_mode: bool = True        # START IN DEMO — set False for live
 
     # ── Polymarket credentials ────────────────────────────────────────────────
@@ -57,13 +57,8 @@ class BotConfig:
         # Support key as base64 env var (for Railway/cloud) or local file path
         key_b64 = os.getenv("KALSHI_PRIVATE_KEY_B64", "")
         if key_b64:
-            # Strip all whitespace — Railway's UI can silently inject spaces/newlines
-            pem_bytes = base64.b64decode("".join(key_b64.split()))
-            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pem")
-            tmp.write(pem_bytes)
-            tmp.flush()
-            tmp.close()
-            cfg.kalshi_private_key_path = tmp.name
+            # Strip ALL whitespace before decoding — Railway's UI injects spaces/newlines
+            cfg.kalshi_private_key_bytes = base64.b64decode("".join(key_b64.split()))
         else:
             cfg.kalshi_private_key_path = os.getenv("KALSHI_PRIVATE_KEY_PATH", "keys/kalshi_private.pem")
 

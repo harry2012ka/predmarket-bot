@@ -54,7 +54,13 @@ class KalshiOrder:
 
 
 class KalshiClient:
-    def __init__(self, api_key_id: str, private_key_path: str, demo: bool = True):
+    def __init__(
+        self,
+        api_key_id: str,
+        private_key_path: str = None,
+        demo: bool = True,
+        private_key_bytes: bytes = None,
+    ):
         self.api_key_id = api_key_id
         self.demo = demo
         self.base_url = KALSHI_DEMO_URL if demo else KALSHI_PROD_URL
@@ -62,10 +68,15 @@ class KalshiClient:
         self._session: Optional[aiohttp.ClientSession] = None
         self._ws: Optional[aiohttp.ClientWebSocketResponse] = None
 
-        with open(private_key_path, "rb") as f:
-            self._private_key = serialization.load_pem_private_key(
-                f.read(), password=None, backend=default_backend()
-            )
+        if private_key_bytes:
+            pem_data = private_key_bytes
+        else:
+            with open(private_key_path, "rb") as f:
+                pem_data = f.read()
+
+        self._private_key = serialization.load_pem_private_key(
+            pem_data, password=None, backend=default_backend()
+        )
         log.info(f"Kalshi client initialized ({'DEMO' if demo else 'LIVE'})")
 
     def _sign(self, method: str, path: str) -> dict:
