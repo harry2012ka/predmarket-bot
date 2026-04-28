@@ -15,10 +15,10 @@ INSTANTLY_BASE = "https://api.instantly.ai/api/v2"
 
 class InstantlyClient:
     def __init__(self, api_key: str, campaign_id: str):
-        self.api_key = api_key
-        self.campaign_id = campaign_id
+        self.api_key = "".join(api_key.split())
+        self.campaign_id = "".join(campaign_id.split())
         self._headers = {
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
 
