@@ -7,6 +7,7 @@ Author: Built for harry2k12
 
 import asyncio
 import logging
+import os
 import signal
 import sys
 from pathlib import Path
@@ -20,6 +21,7 @@ async def main():
     setup_logging()
     log = logging.getLogger("bot.main")
 
+    # ── Trading bot ───────────────────────────────────────────────────────────
     config = BotConfig.from_env()
     log.info("Starting Prediction Market Bot")
     log.info(f"Mode: {config.mode} | Platforms: {config.platforms}")
@@ -28,12 +30,25 @@ async def main():
 
     engine = TradingEngine(config)
 
+    # ── Outbound sales pipeline ───────────────────────────────────────────────
+    pipeline = None
+    if os.getenv("APOLLO_API_KEY") and os.getenv("INSTANTLY_API_KEY"):
+        try:
+            from outbound.pipeline import OutboundPipeline
+            pipeline = OutboundPipeline()
+            pipeline.start()
+            log.info("Outbound pipeline started alongside trading bot")
+        except Exception as e:
+            log.error(f"Outbound pipeline failed to start: {e}")
+
     # Graceful shutdown on SIGINT / SIGTERM
     loop = asyncio.get_running_loop()
 
     def _shutdown():
         log.warning("Shutdown signal received — cancelling open orders...")
         asyncio.create_task(engine.shutdown())
+        if pipeline:
+            pipeline.stop()
 
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, _shutdown)
