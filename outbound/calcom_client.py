@@ -23,7 +23,7 @@ class CalcomClient:
         Returns confirmed bookings.
         Each dict: uid, attendee_email, title, start_time
         """
-        params = {"status": "accepted", "take": limit}
+        params = {"status": "upcoming", "take": limit}
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"{CALCOM_BASE}/bookings",
