@@ -15,7 +15,7 @@ from pathlib import Path
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from video_system.reddit_scraper      import RedditScraper
+from video_system.reddit_scraper      import get_top_stories
 from video_system.script_writer       import write_tiktok_script, write_youtube_script
 from video_system.voice_generator     import VoiceGenerator
 from video_system.tiktok_builder      import build_tiktok_video
@@ -45,7 +45,6 @@ def _next_episode_number() -> int:
 
 class VideoPipeline:
     def __init__(self):
-        self.scraper   = RedditScraper()
         self.voice_gen = VoiceGenerator()
         self.scheduler = AsyncIOScheduler()
         _ensure_dirs()
@@ -75,7 +74,7 @@ class VideoPipeline:
 
     async def _job_tiktok_batch(self):
         log.info("Video pipeline: generating 3 TikTok videos...")
-        stories = self.scraper.get_top_stories(count=6)
+        stories = await get_top_stories(count=6)
         generated = 0
 
         for story in stories:

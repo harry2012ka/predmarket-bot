@@ -1,46 +1,47 @@
 """
-Reddit scraper — pulls top posts from drama/revenge subreddits.
+Reddit scraper — uses public JSON feed, no API key required.
 """
 
 import logging
-import os
-import praw
+import aiohttp
 
 log = logging.getLogger("video.reddit")
 
 SUBREDDITS = ["ProRevenge", "AmItheAsshole", "NuclearRevenge", "pettyrevenge"]
+HEADERS    = {"User-Agent": "Mozilla/5.0 (compatible; video_bot/1.0)"}
 
 
-class RedditScraper:
-    def __init__(self):
-        self.reddit = praw.Reddit(
-            client_id="".join(os.environ["REDDIT_CLIENT_ID"].split()),
-            client_secret="".join(os.environ["REDDIT_CLIENT_SECRET"].split()),
-            user_agent=os.getenv("REDDIT_USER_AGENT", "video_bot/1.0"),
-        )
-
-    def get_top_stories(self, count: int = 10) -> list[dict]:
-        """
-        Returns top stories across all drama subreddits.
-        Each dict: title, selftext, score, subreddit, url
-        """
-        stories = []
+async def get_top_stories(count: int = 10) -> list[dict]:
+    """
+    Fetches top posts from all drama subreddits via public JSON feed.
+    Returns list of {title, body, score, subreddit, url}
+    """
+    stories = []
+    async with aiohttp.ClientSession(headers=HEADERS) as session:
         for sub in SUBREDDITS:
+            url = f"https://www.reddit.com/r/{sub}/top.json?sort=top&t=day&limit=10"
             try:
-                subreddit = self.reddit.subreddit(sub)
-                for post in subreddit.top(time_filter="day", limit=5):
-                    if len(post.selftext) < 200:
+                async with session.get(url) as resp:
+                    if resp.status != 200:
+                        log.warning(f"Reddit JSON {sub} returned {resp.status}")
                         continue
-                    stories.append({
-                        "title":     post.title,
-                        "body":      post.selftext[:3000],
-                        "score":     post.score,
-                        "subreddit": sub,
-                        "url":       f"https://reddit.com{post.permalink}",
-                    })
+                    data = await resp.json()
+                    posts = data.get("data", {}).get("children", [])
+                    for post in posts:
+                        p = post.get("data", {})
+                        body = p.get("selftext", "")
+                        if len(body) < 200 or body == "[removed]":
+                            continue
+                        stories.append({
+                            "title":     p.get("title", ""),
+                            "body":      body[:3000],
+                            "score":     p.get("score", 0),
+                            "subreddit": sub,
+                            "url":       f"https://reddit.com{p.get('permalink', '')}",
+                        })
             except Exception as e:
                 log.error(f"Reddit fetch failed for r/{sub}: {e}")
 
-        stories.sort(key=lambda x: x["score"], reverse=True)
-        log.info(f"Reddit: fetched {len(stories)} stories")
-        return stories[:count]
+    stories.sort(key=lambda x: x["score"], reverse=True)
+    log.info(f"Reddit: fetched {len(stories)} stories")
+    return stories[:count]
