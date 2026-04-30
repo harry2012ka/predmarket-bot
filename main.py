@@ -41,6 +41,17 @@ async def main():
         except Exception as e:
             log.error(f"Outbound pipeline failed to start: {e}")
 
+    # ── Video production pipeline ─────────────────────────────────────────────
+    video_pipeline = None
+    if os.getenv("ELEVENLABS_API_KEY") and os.getenv("ANTHROPIC_API_KEY"):
+        try:
+            from video_system.pipeline import VideoPipeline
+            video_pipeline = VideoPipeline()
+            video_pipeline.start()
+            log.info("Video pipeline started | TikTok@10am | YouTube@Mon/Wed/Fri 6am")
+        except Exception as e:
+            log.error(f"Video pipeline failed to start: {e}")
+
     # Graceful shutdown on SIGINT / SIGTERM
     loop = asyncio.get_running_loop()
 
@@ -49,6 +60,8 @@ async def main():
         asyncio.create_task(engine.shutdown())
         if pipeline:
             pipeline.stop()
+        if video_pipeline:
+            video_pipeline.stop()
 
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, _shutdown)
