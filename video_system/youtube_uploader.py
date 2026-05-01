@@ -25,6 +25,13 @@ TOKEN_PATH = "data/youtube_token.pkl"
 def _get_youtube_service():
     creds = None
 
+    # Load token from env var (Railway) or local file
+    token_b64 = os.environ.get("YOUTUBE_TOKEN_B64", "")
+    if token_b64 and not os.path.exists(TOKEN_PATH):
+        os.makedirs("data", exist_ok=True)
+        with open(TOKEN_PATH, "wb") as f:
+            f.write(base64.b64decode("".join(token_b64.split())))
+
     if os.path.exists(TOKEN_PATH):
         with open(TOKEN_PATH, "rb") as f:
             creds = pickle.load(f)
