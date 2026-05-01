@@ -35,7 +35,8 @@ class CalcomClient:
                     log.error(f"Cal.com get_bookings failed {resp.status}: {text}")
                     return []
                 data = await resp.json()
-                bookings_raw = data.get("data", {}).get("bookings", [])
+                raw = data.get("data", [])
+                bookings_raw = raw if isinstance(raw, list) else raw.get("bookings", [])
                 results = []
                 for b in bookings_raw:
                     attendees = b.get("attendees", [])
