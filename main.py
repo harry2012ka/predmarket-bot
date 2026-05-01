@@ -15,6 +15,7 @@ from pathlib import Path
 from config import BotConfig
 from engine import TradingEngine
 from logger import setup_logging
+from file_server import start_file_server
 
 
 async def main():
@@ -29,6 +30,9 @@ async def main():
     log.info(f"Daily loss limit: ${config.daily_loss_limit_usd}")
 
     engine = TradingEngine(config)
+
+    # ── File server (video downloads) ─────────────────────────────────────────
+    await start_file_server()
 
     # ── Outbound sales pipeline ───────────────────────────────────────────────
     pipeline = None
